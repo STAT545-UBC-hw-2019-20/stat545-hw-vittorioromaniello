@@ -1,0 +1,94 @@
+---
+title: "Data Analysis of the gapminder dataset"
+author: "Vittorio Romaniello"
+date: "05/09/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+```
+
+## Introduction
+
+This file explores the gapminder dataset from the library `gapminder`.
+We first load the `gapminder` package.
+```{r echo=FALSE}
+library(knitr)
+```
+
+```{r}
+library(gapminder)
+```
+Before starting the analysis we look at the description of the dataset.
+```{r eval = FALSE}
+?gapminder
+```
+The gapminder dataset contains data on life expectancy, GDP per capita and population by country. More information can be found at <http://www.gapminder.org/data/>.
+
+Now that we have a general understanding of the dataset, we can perform some exploratory analysis.
+
+## Analysis 
+
+The dataset contains ``r nrow(gapminder)`` rows and ``r ncol(gapminder)`` columns.
+In line with the description of the dataset above, we find that the columns are:
+```{r, echo=TRUE}
+names(gapminder)
+```
+
+Given that the number of countries in the world is less that ``r nrow(gapminder)``, we have reason to believe that there might be more than one observation per country. Let's verify whether this is the case. The number of unique countries in the dataset is ``r length(unique(gapminder$country))``, therefore more observations for the same country are collected over the years. Specifically in the years: 
+```{r echo=FALSE}
+unique(gapminder$year)
+```
+
+### Analysis by variable
+Continuing our analysis, we will focus on the variables `pop`, `lifeExp` and `gdpPercap`, analysing each one of them separately.
+
+#### Population
+
+Looking at the population of the countries in the dataset, we observe that China is the country with the largest population, followed by India:
+```{r}
+kable(gapminder[gapminder$pop == max(gapminder$pop),])
+kable(gapminder[gapminder$country != "China" & gapminder$pop == max(gapminder[gapminder$country != "China", c("pop")]),])
+```
+
+The country with the smallest population is Sao Tome and Principe:
+```{r}
+kable(gapminder[gapminder$pop == min(gapminder$pop),])
+```
+
+The smallest population recorded is from the year 1952 while the largest populations are from the year 2007. However, even for 2007, Sao Tome and Principe still remains the country with the smallest population:
+```{r}
+kable(gapminder[gapminder$pop == min(gapminder[gapminder$year == 2007, c("pop")]),])
+```
+
+Overall, we observe that population has shown an increasing trend over the years, as illustrated by the boxplot below (we have transformed the population on a logarithmic scale in order to make the plot more insightful).
+```{r echo=FALSE}
+boxplot(log(pop)~year,data=gapminder, xlab="Year", ylab = "log(Population)", main="Boxplot of log(Population) by year")
+```
+
+#### Life expectancy and GDP per capita
+
+Similar analyses can be performed for the variables `lifeExp` and `gdpPercap`. The countries with the highest and lowest life expectancy are Japan (2007) and Rwanda (1992), respectively. In 2007, the country with the lowest life expectancy was Swaziland.
+```{r}
+kable(gapminder[gapminder$lifeExp == max(gapminder$lifeExp),])
+kable(gapminder[gapminder$lifeExp == min(gapminder$lifeExp),])
+kable(gapminder[gapminder$lifeExp == min(gapminder[gapminder$year==2007, c("lifeExp")]) ,])
+```
+
+Over the years, there was a significant change in life expectancy, globally. The median life span increased by approximately 25 years, from 45 years in 1952 to 70 years in 2007. 
+```{r echo=FALSE}
+boxplot(lifeExp~year, data=gapminder, xlab="Year", ylab="Life Expectancy", main="Boxplot of life expectancy by year")
+```
+
+In terms of GDP per capita, the richest country was Kuwait (1957), with its citizens earning as much as ``r as.integer(gapminder[gapminder$gdpPercap == max(gapminder$gdpPercap), c("gdpPercap")])`` US$ per year. The poorest country in the dataset was Congo (2002) with a GDP per capita of 
+``r as.integer(gapminder[gapminder$gdpPercap == min(gapminder$gdpPercap), c("gdpPercap")])`` US$.
+
+As for the previous variables, we observe that GDP per capita has increased over the years (again we transformed the variable on a logerithmic scale).
+```{r echo=FALSE}
+boxplot(log(gdpPercap)~year, data=gapminder, xlab="Year", ylab="Log(GDP)", main="Boxplot of log(GDP) by year")
+```
+
+## Conclusion
+In this exercise we performed a simple data analysis of the gapminder dataset. We observed that over the years life expectancy, GDP per capita and population have increased. We also found that the countries with highest/lowest GDP per capita are not also the countries with highest/lowest life expectancy, indicating that life expectancy is determined also by other factors than a country's GDP.
+
