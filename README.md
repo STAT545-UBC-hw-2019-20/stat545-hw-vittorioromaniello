@@ -1,6 +1,6 @@
 # Assignment repository STAT545 :book:
 
-This repository contains the files submitted for the assignments for the course STAT545 taught at UBC in fall 2019. Refer to the course website for more information: https://stat545.stat.ubc.ca
+This repository contains the files submitted for the assignments for the course *STAT545* taught at UBC in fall 2019. Refer to the [course website](https://stat545.stat.ubc.ca) for more information. 
 
 The repository is structured in folders named `hw_X` where X is the assignment number.
 
