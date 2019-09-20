@@ -1,0 +1,217 @@
+---
+title: "Gapminder exploration"
+author: "Vittorio Romaniello"
+date: "19/09/2019"
+output: github_document
+always_allow_html: yes
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+In this document wee will answer the questions for assignment 2 for STAT545. We will be performing an exploration of the gapminder dataset using  `dplyr` and `gpglot2`. First we load the packages needed for the analysis 
+```{r, eval=FALSE}
+library(tidyverse)
+library(gapminder)
+```
+
+```{r, echo=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gapminder))
+```
+
+# Exercise 1
+
+As initial step of our analysis we visualize the dataset for Italy, Spain and Canada for the 1970's.
+
+```{r}
+filtered_gapminder <- gapminder %>% 
+  filter(country %in% c("Italy", "Spain", "Canada") & between(year, 1970, 1979))
+```
+
+Now we show the country and GDP per capita for each of the countries filtered.
+
+```{r}
+filtered_gapminder %>% 
+  select(country, gdpPercap)
+```
+
+Next we investigate which countries experienced a drop in life expectancy over the years.
+
+```{r}
+gapminder %>% 
+  group_by(country) %>% 
+  mutate(lifeExp_change = lifeExp - lag(lifeExp, 1, order_by = year)) %>% 
+  filter(lifeExp_change < 0)
+```
+
+Between two observation periods, life expectancy has decreased in 102 cases. We also check the countries for which life expectancy decreased between the first and last observation.
+
+```{r}
+gapminder %>% 
+  filter(year == min(year) | year == max(year)) %>% 
+  group_by(country) %>% 
+  mutate(lifeExp_change = lifeExp - lag(lifeExp, 1, order_by = year)) %>% 
+  filter(lifeExp_change < 0)
+```
+
+Only for Swaziland and Zimbabwe life expectancy decreased between the first and last observation period.
+
+
+Next we show the maximum GDP per capita experienced by each country and the year in which this was observed.
+
+```{r}
+gapminder %>% 
+  group_by(country) %>% 
+  filter(gdpPercap == max(gdpPercap)) %>% 
+  select(country, year, gdpPercap)
+```
+
+In the next step we plot Canada's life expectancy vs. the log of gdp per capita.
+```{r}
+gapminder %>% 
+  filter(country == "Canada") %>% 
+  ggplot(aes(gdpPercap, lifeExp)) + 
+  geom_point() +
+  scale_x_log10("GDP per capita", labels = scales::dollar_format()) + 
+  labs(title="Canada's life expectancy vs. GDP per capita", y="Life Expectancy") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+There seems to be a linear relation between Canada's life expectancy and GDP per capita.
+
+# Exercise 2
+Next, we explore some variables in the dataset that might be of interest. In particular, we focus on the variables GDP per capita and continent.
+
+## GDP per capita
+First we plot the data to obtain an overall visual understanding of GDP per capita.
+
+```{r}
+gapminder %>% 
+  select(gdpPercap, year) %>%
+  mutate(year= factor(year)) %>% 
+  ggplot(aes(year, gdpPercap)) +
+  scale_y_log10("GDP per capita", labels=scales::dollar_format()) +
+  geom_boxplot() + xlab("Year")
+```
+
+The boxplot shows that GDP per capita has increased over the years. However, in the years 1952-1962, there was a country with much larger GDP per capita as compared to the others. The boxplot also shows that the range of the variable is rather large. Folowing we show some of the statistics of the sample grouped by year.
+
+```{r}
+gapminder %>% 
+  select(gdpPercap, year) %>% 
+  group_by(year) %>% 
+  summarise(mean_GDP = mean(gdpPercap, na.rm = TRUE),
+            std_GDP = sd(gdpPercap, na.rm = TRUE),
+            max_GDP = max(gdpPercap),
+            min_GDP = min(gdpPercap),
+            median_GDP = median(gdpPercap))
+```
+
+The table reflects the information observed in the boxplot.
+
+# Continent
+Now we move our focus to the variable continent. To indicate which values the variable can take we provide a snapshot of the variable and its frequency.
+
+```{r}
+gapminder %>% 
+  select(continent, year) %>% 
+  group_by(year) %>% 
+  count(continent)
+```
+
+We see that the counts are the same for each year. Indicating that the  countries included in the dataset do not change across years, with a total of 142 countries. To have a clearer view of which continent is most represented, we provide a barplot.
+
+```{r}
+gapminder %>% 
+  select(continent, year) %>% 
+  mutate(year = factor(year)) %>% 
+  group_by(year) %>% 
+  count(continent, name="count_continent") %>% 
+  ggplot(aes(year, count_continent)) + geom_bar(aes(fill=continent), stat="identity") +
+  labs(x="Year", y="Continent frequency")
+```
+
+This plot confirms the results from the table that Africa is the continent with the largest number of countries while Oceania only has 2 countries.
+
+# Exercise 3
+
+To further explore the data, we compare for each continent the richest and poorest country, as well as the countries with the highest/lowest life expectancy.
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  filter(gdpPercap == max(gdpPercap)) %>% 
+  select(country, continent, year, gdpPercap) %>% 
+  ggplot(aes(year, gdpPercap, color=continent)) +
+  geom_point() +
+  xlab("Year") + 
+  scale_y_continuous(labels=scales::dollar_format()) + 
+  labs(title="Richest countries by year", y="GDP per capita") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+We see that the Asia has had the richest country in the world until the 1980's where European countries have been the richest. Africa has generally been the poorest continent. We can also notice that the difference in GDP per capita among the richest countries of each continent has shrunk over the years with the exception of Africa.
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  filter(gdpPercap == min(gdpPercap)) %>% 
+  select(country, continent, year, gdpPercap) %>% 
+  ggplot(aes(year, gdpPercap, color=continent)) +
+  geom_point() +
+  xlab("Year") + 
+  scale_y_continuous(labels=scales::dollar_format()) + 
+  labs(title="Poorest countries by year", y="GDP per capita") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Plotting the poorest countries we see that while for all continents the poorest countries did not improve their GDP per capita over the years, in Oceania this was not the case. 
+
+Lastly, we show the same plots for life expectancy.
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  filter(lifeExp == max(lifeExp)) %>% 
+  select(country, continent, year, lifeExp) %>% 
+  ggplot(aes(year, lifeExp, color=continent)) +
+  geom_point() +
+  xlab("Year") + 
+  labs(title="Highest life expectancy by continent by year", y="Life Expectancy") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  filter(lifeExp == min(lifeExp)) %>% 
+  select(country, continent, year, lifeExp) %>% 
+  ggplot(aes(year, lifeExp, color=continent)) +
+  geom_point() +
+  xlab("Year") + 
+  labs(title="Lowest life expectancy by continent by year", y="Life Expectancy") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The two plots show that in the countries with highest life expectancy, life expectancy has increased dramatically over the years, especially for African countries. An increase in life expectancy has also been noticed for the countries that had the lowest life expectancy. Indicating that overall life expectancy has increased, as shown in the boxplots for assignment 1. A special case in this plot is for african countries where, in the 1990's thre was a sharp decline in life expectancy, probably due to civil wars.
+
+# Extra exercise
+
+```{r}
+filter(gapminder, country == c("Rwanda", "Afghanistan"))
+```
+
+When running this command we do not obtain all observations we expected, it seems like even years get assigned to Rwanda while odd years to Afghanistan. To perform the query properly, we can modify the statement in this way
+
+```{r}
+filter(gapminder, country %in% c("Rwanda", "Afghanistan"))
+```
+
+or by writing a bit more
+
+```{r}
+DT::datatable(filter(gapminder, country == "Rwanda" | country =="Afghanistan"))
+```
+
+
+
