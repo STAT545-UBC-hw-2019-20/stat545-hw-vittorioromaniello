@@ -210,7 +210,7 @@ filter(gapminder, country %in% c("Rwanda", "Afghanistan"))
 or by writing a bit more
 
 ```{r}
-DT::datatable(filter(gapminder, country == "Rwanda" | country =="Afghanistan"))
+filter(gapminder, country == "Rwanda" | country =="Afghanistan")
 ```
 
 
