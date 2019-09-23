@@ -227,11 +227,11 @@ most represented, we provide a barplot.
 ``` r
 gapminder %>% 
   select(continent, year) %>% 
-  mutate(year = factor(year)) %>% 
-  group_by(year) %>% 
-  count(continent, name="count_continent") %>% 
-  ggplot(aes(year, count_continent)) + geom_bar(aes(fill=continent), stat="identity") +
-  labs(x="Year", y="Continent frequency")
+  filter(year == 2007) %>% 
+  count(continent) %>% 
+  ggplot(aes(continent, n)) + geom_bar(aes(fill=continent), stat="identity") +
+  labs(x="Continent", y="Number of countries") +
+  geom_text(aes(label=n), vjust=-0.4)
 ```
 
 ![](gapminder_exploration_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
@@ -252,7 +252,7 @@ gapminder %>%
   filter(gdpPercap == max(gdpPercap)) %>% 
   select(country, continent, year, gdpPercap) %>% 
   ggplot(aes(year, gdpPercap, color=continent)) +
-  geom_point() +
+  geom_line() +
   xlab("Year") + 
   scale_y_continuous(labels=scales::dollar_format()) + 
   labs(title="Richest countries by year", y="GDP per capita") +
@@ -273,7 +273,7 @@ gapminder %>%
   filter(gdpPercap == min(gdpPercap)) %>% 
   select(country, continent, year, gdpPercap) %>% 
   ggplot(aes(year, gdpPercap, color=continent)) +
-  geom_point() +
+  geom_line() +
   xlab("Year") + 
   scale_y_continuous(labels=scales::dollar_format()) + 
   labs(title="Poorest countries by year", y="GDP per capita") +
@@ -294,7 +294,7 @@ gapminder %>%
   filter(lifeExp == max(lifeExp)) %>% 
   select(country, continent, year, lifeExp) %>% 
   ggplot(aes(year, lifeExp, color=continent)) +
-  geom_point() +
+  geom_line() +
   xlab("Year") + 
   labs(title="Highest life expectancy by continent by year", y="Life Expectancy") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -308,7 +308,7 @@ gapminder %>%
   filter(lifeExp == min(lifeExp)) %>% 
   select(country, continent, year, lifeExp) %>% 
   ggplot(aes(year, lifeExp, color=continent)) +
-  geom_point() +
+  geom_line() +
   xlab("Year") + 
   labs(title="Lowest life expectancy by continent by year", y="Life Expectancy") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -349,8 +349,10 @@ filter(gapminder, country == c("Rwanda", "Afghanistan"))
 
 When running this command we do not obtain all observations we expected,
 it seems like even years get assigned to Rwanda while odd years to
-Afghanistan. To perform the query properly, we can modify the statement
-in this way
+Afghanistan, this is likely due to the fact that the vector c(“Rwanda”,
+“Afghanistan”) gets recycled. Hence first an observation for Rwanda is
+found and subsequently one for Afghanistan and so on. To perform the
+query properly, we can modify the statement in this way
 
 ``` r
 filter(gapminder, country %in% c("Rwanda", "Afghanistan"))
