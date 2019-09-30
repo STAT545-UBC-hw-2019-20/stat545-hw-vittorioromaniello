@@ -1,10 +1,7 @@
 ---
 title: "Gapminder Assignment 3"
 author: "Vittorio Romaniello"
-date: "25/09/2019"
-output: 
-  html_document:
-    keep_md: True
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -16,7 +13,6 @@ This assignment is a continuation of assignments 1 and 2 and provides a more in-
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(gapminder)
-library(knitr)
 ```
 
 Now that we have access to the dataset we can start the analysis.
