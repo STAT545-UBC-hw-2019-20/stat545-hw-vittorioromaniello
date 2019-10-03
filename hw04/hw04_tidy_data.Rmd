@@ -1,0 +1,185 @@
+---
+title: "Tidy data and joins"
+author: "Vittorio Romaniello"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this assignment we will explore some more advanced functionalities of tidyr. In particular, we will demonstrate how to manipulate datasets.
+As usual, we first load the packages required for the assignment.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(gapminder)
+```
+
+## Exarcise 1: Univariate data reshaping
+
+### Univariate Option 1
+
+1. Make a tibble with one row per year, and columns for life expectancy for two or more countries. 
+
+We filter the dataset to only contain data for Canada, Italy and India so that the output table can be rendered in a nice format. To obtain the same result for all countries the filter can be removed.
+
+```{r}
+wider_gapminder = gapminder %>% 
+  filter(country %in% c("Canada", "Italy", "India")) %>% 
+  pivot_wider(id_cols = year, names_from = country, values_from = lifeExp)
+wider_gapminder %>% 
+  DT::datatable()
+```
+
+2. Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.
+
+We choose to scatterplot life expectancy of Italy and Canada.
+
+```{r}
+wider_gapminder %>% 
+  ggplot(aes(x=year)) + 
+  geom_point(aes(y=Italy, colour="Italy")) + 
+  geom_point(aes(y=Canada, colour="Canada")) + 
+  labs(x="Year", y="Life Expectancy")
+```
+Life expectancy has increased over the years for both countries.
+
+3. Re-lengthen the data.
+
+```{r}
+wider_gapminder %>% 
+  pivot_longer(cols = -year, 
+               names_to = "Country", 
+               values_to = "lifeExp") %>% 
+  DT::datatable()
+```
+
+## Exercise 2: Multivariate Data Reshaping
+
+### Multivariate Option 1
+
+1.Make a tibble with one row per year, and columns for life expectancy and GDP per capita (or two other numeric variables) for two or more countries.
+
+We filter gapminder to only three countries to allow for a readable output. Removing the filter command provides the result for the entire dataset.
+
+```{r}
+wider_gapminder_multivariate = gapminder %>% 
+  filter(country %in% c("Italy", "Canada", "India")) %>% 
+  pivot_wider(id_cols = year, names_from = c(country), 
+              names_sep = "_", values_from = c(lifeExp, gdpPercap))
+wider_gapminder_multivariate %>% 
+  DT::datatable()
+```
+
+2. Re-lengthen the data
+
+```{r}
+wider_gapminder_multivariate %>% 
+  pivot_longer(cols = -year,
+               names_to = c(".value", "country"), 
+               names_sep = "_") %>% 
+  DT::datatable()
+```
+
+## Exercise 3: Table Joins
+For this exercise we need to read some external data as
+
+```{r, message=FALSE, warning=FALSE}
+guest <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/attend.csv")
+email <- read_csv("https://raw.githubusercontent.com/STAT545-UBC/Classroom/master/data/wedding/emails.csv")
+```
+
+Since we do not know the structure of the dataset just loaded, we print parts of it to understand their structure and get an idea of how to perform the tasks in this assignment.
+
+Guest data:
+```{r}
+guest %>% 
+  head() %>% 
+  knitr::kable()
+```
+
+Email data:
+```{r}
+email %>% 
+  head() %>% 
+  knitr::kable()
+```
+
+### 3.1
+For each guest in the guestlist (guest tibble), add a column for email address, which can be found in the email tibble.
+
+Since the email tibble is not structured in a tidy name, we restructure this tibble using separate_rows()
+
+```{r}
+email_tidy = email %>% 
+  separate_rows(guest, sep=", ")
+email_tidy  %>% 
+  DT::datatable()
+```
+
+
+Now that we have tidied up the email tibble, we can perform a left join on the guest tibble to obtain the result
+
+```{r}
+guest %>%  
+  left_join(y=email_tidy, by = c("name" = "guest"))  %>% 
+  DT::datatable()
+```
+
+### 3.2
+
+Who do we have emails for, yet are not on the guestlist?
+
+To answer this question we use the function anti_join()
+
+```{r}
+email_tidy %>% 
+  anti_join(guest, by = c("guest" = "name")) %>% 
+  DT::datatable()
+```
+
+### 3.3
+
+Make a guestlist that includes everyone we have emails for (in addition to those on the original guestlist).
+
+This result can be achieved with a full_join(), which inserts NAs in the dataset where there is missing information. We can observe that the 3 additional emails we found in 3.2 have NAs for all colummns except the name and email column.
+
+```{r}
+guest %>% 
+  full_join(email_tidy, by = c("name" = "guest")) %>% 
+  DT::datatable()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
